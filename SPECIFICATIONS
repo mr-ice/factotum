@@ -1,0 +1,173 @@
+factotum - a simple http REST like server for arbitrary commands
+Copyright (C) 2014 Michael Rice <michael@riceclan.org>
+
+fac·to·tum
+    /fakˈtōtəm/
+    noun
+    an employee who does all kinds of work.
+    "he was employed as the general factotum"
+    synonyms:	handyman, jack of all trades; assistant, man Friday, gal/girl Friday; gofer; informal Mr./Ms. Fix-It
+
+factotum is concieved as a simple service that can run on a linux-like
+platform.  It will provide a HTTP interface to run commands on the
+machine it is running as, as the user it is running as.
+
+This could be used, for example, to let a service account on one machine
+hand off a task to a service account on a different machine.
+
+Originally we targeted this as a mechanism where a git trigger that can cause a
+remote server to perform a git pull as a completely different user.  This is to
+avoid the classic solution using a passwordless SSH with a passwordless SUDO
+command.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+=SPECIFICATIONS=
+factotum is a program that when launched will:
+
+0 do some basic things
+    0.1 check/set daemon working directory (so as not to hold NFS shares open 
+        unnecessarily -- shall we run with cwd set to / or /tmp or /var/run or
+        some other?)
+    0.2 check/set daemon uid/euid (are we valid, do we allow root?)
+    0.3 check/set argv (can we modify what ps sees this way?)
+    0.4 background ourselves (daemonize)
+    0.5 don't do 0.4 if we were passed -d
+    0.6 since we haven't loaded our config file yet, scream on stderr if we fail
+        any part of this
+
+1 read a config file
+    1.1 passed by command line argument
+    1.2 yaml formatted
+    1.3 optionally automatically fetched from a URL
+    1.4 a default be automatically determined and loaded if one is not given
+        1.4.1 for example sys.argv[0].rstrip('.py') + ".conf" in the directory
+              where we were started (requires that we remember that directory
+              before changing it in 0.1)
+    1.5 validate the config file
+    1.6 load the config via rtyaml, a package that preserves a leading comment
+
+2 based on that config file do several things
+    2.1 listen on a port given in the config file
+        2.1.1 optionally listen on specific interfaces given in the config file
+        2.1.2 by name or IP
+    2.2 on connection to the port print a banner
+    2.3 on receiving data on that port
+        2.3.1 fork to process
+        2.3.2 protect from forking too fast or too many
+        2.3.3 validate the data (length, type, content)
+        2.3.4 look for keywords (action tags)
+
+3 on receiving a validated action tag
+    3.1 change to a directory specified in the action configuration section
+    3.2 run a command specified in the action configuration section
+    3.3 return value(s)
+         3.3.1 return code from the command
+         3.3.2 stdout from the command
+         3.3.3 stdin from the command
+         3.3.4 any combination of these (yaml, json, xml, html)
+    3.4 If environment variables are to be passed, they should be called out
+        in the config, otherwise they should not be passed
+
+4 additional features for a version 2
+    4.1 accept additional arguments or data structures on the port
+    4.2 validate that additional information 
+        4.2.1 have to determine how to validate, where the validator comes from
+    4.3 pass validated information to the executed command
+        4.3.1 on the commandline 
+            4.3.1.1 vi some kind of template
+        4.3.2 via stdin
+        4.3.3 via some other mechanism (RPC-like or network protocol like)
+    4.4 add a modification to the keyword to select the return_format instead
+        of the return_format in the config file.  This way different clients
+        can use the same keyword to get the same information in formats other
+        than YAML (suggest XML, JSON, HTML)
+
+5 Sample configuration file
+
+    # configuration file for 'factotum' -- a small python daemon that
+    # serves relatively arbitrary commandline tasks via HTTP
+    #
+    # Security:  Make sure you understand your inputs and outputs, especially
+    # if you run this command as a privileged user.
+    #
+    # Configuration Elements:
+    #   actions: a list of URI parts and the expected actions to take
+    #     TAG:  each tag under actions is the URL part to match
+    #       chdir: directory to chdir to before running the command in 'exec'
+    #       description: a string to print to describe this service URL
+    #       environment: a list of environment variables to pass or set
+    #       exec: a command to run
+    #       return: one or more of 'stdout','stderr','code'
+    #       type: one of 'raw' or 'dict'
+    #   banner: a string to print when anything connects
+    #   interface: list of IP addresses that this service listens on.  (0.0.0.0 - means all interfaces)
+    #   logging: is a list of configuration elements to control logging
+    #      facility: one of the syslog facility names
+    #      type: 'file' or 'syslog'
+    #      file: path to the logging file if type='file'
+    #      level: syslog priority and to choose what messages to print
+    #   port: the TCP port to listen on
+    #   version: gives the version of factotum for clients to verify
+    #   client: list of verification settings
+    #       version: client version string regular expression (match == pass) (null == auto-pass)
+    #       verify: turn on/off client verification
+    #       ip: client ip address regular expression (match == pass) (null == auto-pass)
+    #
+    # Python YAML via rtyaml only preserves comments at the beginning of the file.
+    actions:
+      LSSYSLOG:
+        chdir: /var/log
+        description: ls -l /var/run/syslog, check stats of syslog
+        environment:
+        - HOME
+        - LANG
+        - PYTHON=/usr/bin/python
+        exec: ls -al syslog
+        return: stdout
+        type: raw
+      MOTD:
+        chdir: /
+        description: cat motd
+        environment: ~
+        exec: cat /etc/motd
+        return: stdout
+        type: raw
+    banner: Factotum test
+    interface: 0.0.0.0
+    logging:
+      facility: user
+      file: not used unless type = file
+      level: debug
+      type: syslog
+    port: 9000
+    version: 1.0
+    client:
+      version: /[10].[0-9]/
+      verify: false
+      ip: ~
+
+
+
+6 Sample commandline specification
+
+    butler [-d] [-v] [-c file|url]
+
+    -d : debugging mode, don't fork into a daemon
+    -v : verbose mode, print out additional logging to stderr
+    -c : a file or url specifying where the configuration file is
+
+    If given as a url, we expect to fetch YAML directly from that URL
+    and process it identically as if it came from a file.
+

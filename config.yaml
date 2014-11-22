@@ -1,0 +1,61 @@
+# configuration file for 'factotum' -- a small python daemon that
+# serves relatively arbitrary commandline tasks via HTTP
+#
+# Security:  Make sure you understand your inputs and outputs, especially
+# if you run this command as a privileged user.
+#
+# Configuration Elements:
+#   actions: a list of URI parts and the expected actions to take
+#     TAG:  each tag under actions is the URL part to match
+#       chdir: directory to chdir to before running the command in 'exec'
+#       description: a string to print to describe this service URL
+#       environment: a list of environment variables to pass or set
+#       exec: a command to run
+#       return: one or more of 'stdout','stderr','code'
+#       type: one of 'raw' or 'dict'
+#   banner: a string to print when anything connects
+#   interface: list of IP addresses that this service listens on.  (0.0.0.0 - means all interfaces)
+#   logging: is a list of configuration elements to control logging
+#      facility: one of the syslog facility names
+#      type: 'file' or 'syslog'
+#      file: path to the logging file if type='file'
+#      level: syslog priority and to choose what messages to print
+#   port: the TCP port to listen on
+#   version: gives the version of factotum for clients to verify
+#   client: list of verification settings
+#       version: client version string regular expression (match == pass) (null == auto-pass)
+#       verify: turn on/off client verification
+#       ip: client ip address regular expression (match == pass) (null == auto-pass)
+#
+# Python YAML via rtyaml only preserves comments at the beginning of the file.
+actions:
+  LSSYSLOG:
+    chdir: /var/log
+    description: ls -l /var/run/syslog, check stats of syslog
+    environment:
+    - HOME
+    - LANG
+    - PYTHON=/usr/bin/python
+    exec: ls -al syslog
+    return: stdout
+    type: raw
+  MOTD:
+    chdir: /
+    description: cat motd
+    environment: ~
+    exec: cat /etc/motd
+    return: stdout
+    type: raw
+banner: Factotum test
+interface: 0.0.0.0
+logging:
+  facility: user
+  file: not used unless type = file
+  level: debug
+  type: syslog
+port: 9000
+version: 1.0
+client:
+  version: /[10].[0-9]/
+  verify: false
+  ip: ~
