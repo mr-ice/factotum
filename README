@@ -40,11 +40,10 @@ Is this like:
     No, because jenkins runs as a web service on one machine and to cross
     privilege boundaries needs help (usually sudo or ssh).  
   oddjob -
-    No, because this runs commands that the server configures, oddjob allows
+    No, because factotum runs commands that the server configures, oddjob allows
     the client to configure jobs for the server (arbitrarily).
   webmin -
-    Closer, but no, because this doesn't need to run as root, and is
-    specialized.  Factotum will run a small set of canned commands, webmin
-    is much more general purpose.  Also we envision REST APIs and not XML-RPC
-    over HTTP (our API can be trivially called from shell scripts like in
-    a git post-commit hook).
+    Closer, but no, because factotum doesn't need to run as root, and is
+    specialized, webmin is much more general purpose.  Also we envision REST
+    APIs and not XML-RPC over HTTP to simplify calling from scripts like in a
+    git post-commit hook.
