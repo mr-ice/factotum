@@ -1,5 +1,4 @@
 # factotum - a simple http REST like server for arbitrary commands
-# factotum buildout.cfg
 # Copyright (C) 2014 Michael Rice <michael@riceclan.org>
 # 
 # This program is free software: you can redistribute it and/or modify
@@ -14,31 +13,3 @@
 # 
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-[buildout]
-parts = pip virtualenv cx_Freeze PyYAML rtyaml Twisted
-bin-directory = bin
-
-[pip]
-recipe = zc.recipe.egg
-eggs = pip
-
-[virtualenv]
-recipe = zc.recipe.egg
-eggs = virtualenv
-
-[cx_Freeze]
-recipe = zc.recipe.egg
-eggs = cx_Freeze
-
-[Twisted]
-recipe = zc.recipe.egg
-eggs = Twisted
-
-[PyYAML]
-recipe = zc.recipe.egg
-eggs = PyYAML
-
-[rtyaml]
-recipe = zc.recipe.egg
-eggs = rtyaml
-
