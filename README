@@ -1,4 +1,4 @@
-factotum - a simple http REST like server for arbitrary commands
+factotum - a simple http REST like server for pre-configured commands
 Copyright (C) 2014 Michael Rice <michael@riceclan.org>
 
 fac·to·tum
@@ -34,3 +34,17 @@ GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+Is this like:
+  jenkins - 
+    No, because jenkins runs as a web service on one machine and to cross
+    privilege boundaries needs help (usually sudo or ssh).  
+  oddjob -
+    No, because this runs commands that the server configures, oddjob allows
+    the client to configure jobs for the server (arbitrarily).
+  webmin -
+    Closer, but no, because this doesn't need to run as root, and is
+    specialized.  Factotum will run a small set of canned commands, webmin
+    is much more general purpose.  Also we envision REST APIs and not XML-RPC
+    over HTTP (our API can be trivially called from shell scripts like in
+    a git post-commit hook).
