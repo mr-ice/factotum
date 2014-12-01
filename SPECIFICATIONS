@@ -50,13 +50,13 @@ factotum is a program that when launched will:
 1 read a config file
     1.1 passed by command line argument
     1.2 yaml formatted
-    1.3 optionally automatically fetched from a URL
-    1.4 a default be automatically determined and loaded if one is not given
-        1.4.1 for example sys.argv[0].rstrip('.py') + ".conf" in the directory
+    1.3 load the config via rtyaml, a package that preserves a leading comment
+    1.4 optionally automatically fetched from a URL
+    1.5 a default be automatically determined and loaded if one is not given
+        1.5.1 for example sys.argv[0].rstrip('.py') + ".conf" in the directory
               where we were started (requires that we remember that directory
               before changing it in 0.1)
-    1.5 validate the config file
-    1.6 load the config via rtyaml, a package that preserves a leading comment
+    1.6 validate the config file
 
 2 based on that config file do several things
     2.1 listen on a port given in the config file
@@ -93,8 +93,17 @@ factotum is a program that when launched will:
         of the return_format in the config file.  This way different clients
         can use the same keyword to get the same information in formats other
         than YAML (suggest XML, JSON, HTML)
+    4.5 use performance indicators from the config file (per keyword) to 
+        establish that the runtime is within acceptable parameters (mem,cpu,time,output)
+    4.6 track performance indicators and runtime metrics in a database, provide "built in"
+        keyword to fetch metrics.
 
 5 Sample configuration file
+
+This config file is in yaml format with a leading comment block (# delimited).
+Using the python package 'rtyaml' will preserve this leading comment block
+when writing the config file.  Other libraries do not preserve this block.
+rtyaml will not preserve any other comments.
 
     # configuration file for 'factotum' -- a small python daemon that
     # serves relatively arbitrary commandline tasks via HTTP
@@ -162,12 +171,12 @@ factotum is a program that when launched will:
 
 6 Sample commandline specification
 
-    butler [-d] [-v] [-c file|url]
+    factotum [-d] [-v...] [-c file|url]
 
     -d : debugging mode, don't fork into a daemon
-    -v : verbose mode, print out additional logging to stderr
+    -v : verbose mode, print out additional logging to stderr 
+         specify multiple times to increase verbosity
     -c : a file or url specifying where the configuration file is
 
     If given as a url, we expect to fetch YAML directly from that URL
     and process it identically as if it came from a file.
-
