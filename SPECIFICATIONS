@@ -1,4 +1,4 @@
-factotum - a simple http REST like server for arbitrary commands
+factotum - a simple http REST like server for pre-configured commands
 Copyright (C) 2014 Michael Rice <michael at riceclan dot org>
 
 fac·to·tum
@@ -10,25 +10,26 @@ fac·to·tum
 
 factotum is concieved as a simple service that can run on a linux-like
 platform.  It will provide a HTTP interface to run commands on the
-machine it is running as, as the user it is running as.
+machine it is running on, as the user it is running as.  The commands
+have to be configured into the service itself, to simplify security.
 
 This could be used, for example, to let a service account on one machine
 hand off a task to a service account on a different machine.
 
-Originally we targeted this as a mechanism where a git trigger that can cause a
-remote server to perform a git pull as a completely different user.  This is to
-avoid the classic solution using a passwordless SSH with a passwordless SUDO
-command.
+Originally we targeted this as a mechanism where a git trigger that can
+cause a remote server to perform a git pull as a completely different
+user.  This is to avoid the classic solution using a passwordless SSH
+with a passwordless SUDO command.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as
-published by the Free Software Foundation, either version 3 of the
-License, or (at your option) any later version.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Affero
+General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -146,6 +147,8 @@ rtyaml will not preserve any other comments.
         exec: ls -al syslog
         return: stdout
         type: raw
+        limit: 1/m
+        timeout: 5s
       MOTD:
         chdir: /
         description: cat motd
@@ -153,6 +156,8 @@ rtyaml will not preserve any other comments.
         exec: cat /etc/motd
         return: stdout
         type: raw
+        limit: 1/s
+        timeout: 5s
     banner: Factotum test
     interface: 0.0.0.0
     logging:
