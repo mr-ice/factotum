@@ -19,22 +19,32 @@
 # 
 import sys
 import rtyaml
-from twisted.internet import protocol, reactor, endpoints
+
+
+from twisted.internet import reactor
+from twisted.web.server import Site
+from twisted.web.resource import Resource
+import time
 
 config = rtyaml.load(file('config.yaml'))
 
-from twisted.web import server, resource
-from twisted.internet import reactor, endpoints
-
-class Counter(resource.Resource):
+class ClockPage(Resource):
     isLeaf = True
-    numberRequests = 0
+    def render_GET(self,request):
+        return "<html><body>%s</body></html>" % (time.ctime(),)
 
-    def render_GET(self, request):
-        self.numberRequests += 1
-        request.setHeader("content-type", "text/plain")
-        return "I am request #" + str(self.numberRequests) + "\n"
+class Action(Resource):
+    isLeaf = True
+    def render_GET(self,request):
+        return "<html><body>%s</body></html>" %
 
-endpoints.serverFromString(reactor, "tcp:%d" % config['port']).listen(server.Site(Counter()))
+root = Resource()
+
+for url in config['actions'].keys():
+    root.putChild()
+
+resource = ClockPage()
+factory = Site(resource)
+
+reactor.listenTCP(config['port'], factory)
 reactor.run()
-
