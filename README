@@ -47,3 +47,9 @@ Is this like:
     specialized, webmin is much more general purpose.  Also we envision REST
     APIs and not XML-RPC over HTTP to simplify calling from scripts like in a
     git post-commit hook.
+  ssh -
+    very close, with command= and from= in authorized keys we can control (force)
+    a particular command.  However the server side is just the authorized keys file
+    which on a shared filesystem may be more servers than you want to allow.  With
+    tcpwrappers or iptables you can restrict/allow ssh in entirety, but you can't 
+    control that bob@thathost can run command@thishost (it's command @ anyhost).
