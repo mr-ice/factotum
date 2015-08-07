@@ -8,7 +8,7 @@ fac·to·tum
     "he was employed as the general factotum"
     synonyms:	handyman, jack of all trades; assistant, man Friday, gal/girl Friday; gofer; informal Mr./Ms. Fix-It
 
-factotum is concieved as a simple service that can run on a linux-like
+factotum is concieved as a simple service that can run on any python
 platform.  It will provide a HTTP interface to run commands on the
 machine it is running on, as the user it is running as.  The commands
 have to be configured into the service itself, to simplify security.
@@ -20,6 +20,9 @@ Originally we targeted this as a mechanism where a git trigger that can
 cause a remote server to perform a git pull as a completely different
 user.  This is to avoid the classic solution using a passwordless SSH
 with a passwordless SUDO command.
+
+It has expanded to allow Jira, Jenkins, and other services run across
+privilege and platform boundaries.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -69,6 +72,7 @@ factotum is a program that when launched will:
         2.3.2 protect from forking too fast or too many
         2.3.3 validate the data (length, type, content)
         2.3.4 look for keywords (action tags)
+        2.3.5 provide status on a pre-configured status keyword
 
 3 on receiving a validated action tag
     3.1 change to a directory specified in the action configuration section
