@@ -1,5 +1,5 @@
 # factotum - a simple http REST like server for arbitrary commands
-# Copyright (C) 2014 Michael Rice <michael at riceclan dot org>
+# Copyright (C) 2014-2015 Michael Rice <michael at riceclan dot org>
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as

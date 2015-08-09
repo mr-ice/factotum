@@ -2,7 +2,7 @@
 
 # factotum - a simple http REST like server for arbitrary commands
 # factotum configtool - simple manipulation of the config.yaml
-# Copyright (C) 2014 Michael Rice <michael@riceclan.org>
+# Copyright (C) 2014-2015s Michael Rice <michael@riceclan.org>
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
