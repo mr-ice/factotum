@@ -2,7 +2,7 @@
 
 
 # factotum - a simple http REST like server for arbitrary commands
-# Copyright (C) 2014-2015s Michael Rice <michael@riceclan.org>
+# Copyright (C) 2014-2015 Michael Rice <michael@riceclan.org>
 # 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -18,12 +18,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 import sys
+import json
 import rtyaml
-
-
-from twisted.internet import reactor
-from twisted.web.server import Site
-from twisted.web.resource import Resource
+import subprocess
 import time
 
 config = rtyaml.load(file('config.yaml'))
@@ -46,5 +43,58 @@ for url in config['actions'].keys():
 resource = ClockPage()
 factory = Site(resource)
 
-reactor.listenTCP(config['port'], factory)
-reactor.run()
+factotum = Flask(__name__)
+
+parser = argparse.ArgumentParser(description='factotum - run your commands with a web URI')
+
+parser.add_argument('-c','--config',
+                    help='load configuration from a file')
+                    
+args = parser.parse_args()
+
+if args.config:
+    config = rtyaml.load(args.config)
+else:
+    config = rtyaml.load('factotum.conf') # default configuration
+    
+@app.route('/<command>', methods = ['POST'])
+def handler(command):
+    
+    
+    # handle json passed in
+    # load commands
+    with open(config.commandfile) as file:
+        commands = json.load(file)
+        
+    if commands[command]:
+        run = commands[command]["command"]
+        for arg in commands[command]["args"]:
+            if arg == "time":
+                run += "%s" % (time.ctime(),)
+        failed = False
+        t = time.strftime("%Y%m%d-%H%M%S") # timestamp
+        out = check_output(run, stderr=subprocess.STDOUT)
+        try: 
+            logdir = config.logdir
+            if not os.path.exists(logdir):
+                os.makedirs(logdir)
+            try:
+                f = open(logdir + "/" + command + "-" + t + ".log", 'wb+)
+                f.write(out)
+                f.close()
+            except Exception as e:
+                raise e # placeholder for error handling in the future
+                
+        except Exception as e:
+            raise e # placeholder for error handling in the future
+    else:
+        print "Command not found: " + command
+        return "Command not found: " + command
+        
+@app.route('/status')
+def Status():
+    return "factotum running"
+    
+    
+if __name__ == '__main__':
+    app.run(host = config.host, port = config.port, debug=config.debug)
