@@ -18,45 +18,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 import sys
-import json
+import argparse
 import rtyaml
-import subprocess
-import time
+from flask import Flast, render_template
 
-config = rtyaml.load(file('config.yaml'))
+app = Flask(__name__)
 
-class ClockPage(Resource):
-    isLeaf = True
-    def render_GET(self,request):
-        return "<html><body>%s</body></html>" % (time.ctime(),)
+parser = argparse.ArgumentParser('factotum - your handy jack of all web services')
+parser.add_argument('--config','-c', 
+                    help='load application configuration from file',
+                    default='config.yaml')
 
-class Action(Resource):
-    isLeaf = True
-    def render_GET(self,request):
-        return "<html><body>%s</body></html>" %
+args = parser.parse_args()
 
-root = Resource()
-
-for url in config['actions'].keys():
-    root.putChild()
-
-resource = ClockPage()
-factory = Site(resource)
+config = rtyaml.load(file(args.config))
 
 factotum = Flask(__name__)
-
-parser = argparse.ArgumentParser(description='factotum - run your commands with a web URI')
-
-parser.add_argument('-c','--config',
-                    help='load configuration from a file')
-                    
-args = parser.parse_args()
 
 if args.config:
     config = rtyaml.load(args.config)
 else:
     config = rtyaml.load('factotum.conf') # default configuration
-    
+
+
 @app.route('/<command>', methods = ['POST'])
 def handler(command):
     
