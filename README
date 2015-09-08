@@ -10,7 +10,7 @@ fac·to·tum
                 Friday; gofer; informal Mr./Ms. Fix-It
 
 
-factotum is concieved as a simple service that can run on any platform that
+factotum is conceived as a simple service that can run on any platform that
 can run Python.  It will provide a HTTP/RESTful interface to run commands
 on the machine it is running as, as the user it is running as.
 
@@ -47,8 +47,10 @@ Is this like:
     APIs and not XML-RPC over HTTP to simplify calling from scripts like in a
     git post-commit hook.
   ssh -
-    very close, with command= and from= in authorized keys we can control (force)
-    a particular command.  However the server side is just the authorized keys file
-    which on a shared filesystem may be more servers than you want to allow.  With
-    tcpwrappers or iptables you can restrict/allow ssh in entirety, but you can't 
-    control that bob@thathost can run command@thishost (it's command @ anyhost).
+    very close, with command= and from= limits in authorized keys we can control
+    (force) a particular command.  However the server side configuration is just
+    an authorized keys file which on a shared filesystem may be more servers than
+    you want to allow.  Using tcpwrappers or iptables you can restrict/allow ssh
+    in entirety, but you can't control that bob@thathost can run command@thishost
+    (if bob has the private key, he can run command @ anyhost from anyhost).  Also
+    limited to exactly one command.
