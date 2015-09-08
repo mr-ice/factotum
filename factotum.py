@@ -20,25 +20,43 @@
 
 from __future__ import print_function
 import sys
+import pwd
 import os
 import argparse
 import rtyaml
+import yaml
 import subprocess
+import socket
 import time
-from flask import Flask, render_template
+from flask import Flask, render_template, make_response
 
-workdir = os.path.dirname(os.path.realpath(__file__))
-
-factotum = Flask(__name__)
-
+execdir = os.path.dirname(os.path.realpath(__file__))
+workdir = os.getcwd()
 parser = argparse.ArgumentParser('factotum - your handy jack of all web services')
 parser.add_argument('--config','-c', 
                     help='load application configuration from file',
-                    default='factotum.conf')
+                    default=workdir + '/factotum.conf')
 
 args = parser.parse_args()
+args.config = os.path.realpath(args.config)
 
 config = rtyaml.load(file(args.config))
+
+if config['debug']:
+    print(workdir)
+    print(args.config)
+    print(os.path.dirname(args.config))
+
+workdir = os.path.dirname(args.config)
+
+if os.path.isabs(config['commandfile']):
+    configfile = config['commandfile']
+else:
+    configfile = workdir + "/" + config['commandfile']
+
+t0 = time.strftime("%Y%m%d-%H%M%S") # timestamp
+factotum = Flask(__name__)
+
 
 if config['debug']:
     print("got interface as {}".format(config['interface']))
@@ -46,7 +64,6 @@ if config['debug']:
 @factotum.route('/<command>', methods = ['POST', 'GET'])
 def handler(command):
 
-    configfile = workdir + "/" + config['commandfile']
     if config['debug']:
         print(configfile)
         print(command)
@@ -65,6 +82,8 @@ def handler(command):
 
     try:
         run = commands[command]['exec']
+        if isinstance(run,basestring):
+            run = run.split(" ")
     except Exception as e:
         raise e # do something smart here later (set run string)
 
@@ -90,7 +109,7 @@ def handler(command):
         raise e # do something smart here later (chdir)
 
     try:
-        out = subprocess.check_output(run, stderr=subprocess.STDOUT, shell=True)
+        out = subprocess.check_output(run, stderr=subprocess.STDOUT)
         return out
     except Exception as e:
         raise e # do something smart here later (subprocess.check_output)
@@ -115,8 +134,43 @@ def handler(command):
 
 @factotum.route('/status')
 def Status():
-    return "factotum running"
-    
-    
+    response = make_response("factotum running\r\n" \
+           "    run at: {time}\r\n" \
+           "    run by: {uid}@{host} (pid {pid})\r\n" \
+           "    run in: cd {cwd}\r\n" \
+           "    run as: {argv}\r\n" \
+           "    script: {file}\r\n" \
+           "    config: {config}\r\n" \
+           "    commands: {command}\r\n" \
+           "".format(
+        time= t0,
+        file= os.path.realpath(__file__),
+        host= socket.gethostname(),
+        uid= pwd.getpwuid(os.getuid())[0],
+        pid= os.getpid(),
+        cwd= workdir,
+        config= args.config,
+        command= configfile,
+        argv=' '.join(sys.argv)
+        ), 200)
+    response.headers['Content-type'] = 'text/plain'
+    return response
+
+@factotum.route('/id')
+def Id():
+    return subprocess.check_output('/usr/bin/id', stderr=subprocess.STDOUT)
+
+@factotum.route('/env')
+def Env():
+    return subprocess.check_output('/usr/bin/env', stderr=subprocess.STDOUT)
+
+@factotum.route('/config')
+def ConfigFile():
+    return file(args.config).read()
+
+@factotum.route('/commands')
+def CommandFile():
+    return file(configfile).read()
+
 if __name__ == '__main__':
     factotum.run(host = config['interface'], port = config['port'], debug=config['debug'])
