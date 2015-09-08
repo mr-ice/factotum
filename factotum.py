@@ -19,15 +19,15 @@
 #
 
 from __future__ import print_function
-import sys
-import pwd
-import os
 import argparse
+import datetime
+import os
+import pwd
 import rtyaml
-import yaml
-import subprocess
 import socket
-import time
+import subprocess
+import sys
+import yaml
 from flask import Flask, render_template, make_response
 
 execdir = os.path.dirname(os.path.realpath(__file__))
@@ -54,7 +54,7 @@ if os.path.isabs(config['commandfile']):
 else:
     configfile = workdir + "/" + config['commandfile']
 
-t0 = time.strftime("%Y%m%d-%H%M%S") # timestamp
+t0 = datetime.datetime.now() # timestamp
 factotum = Flask(__name__)
 
 
@@ -93,7 +93,7 @@ def handler(command):
         raise e # do something smart here later (set chdir string)
 
     try:
-        t = time.strftime("%Y%m%d-%H%M%S") # timestamp
+        t = datetime.datetime.now().strftime('%Y%m%d-%H:%M:%S') # timestamp
     except Exception as e:
         raise e # do something smart here later (set timestamp string)
 
@@ -143,7 +143,7 @@ def Status():
            "    config: {config}\r\n" \
            "    commands: {command}\r\n" \
            "".format(
-        time= t0,
+        time= t0.isoformat(" "),
         file= os.path.realpath(__file__),
         host= socket.gethostname(),
         uid= pwd.getpwuid(os.getuid())[0],
