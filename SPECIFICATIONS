@@ -6,9 +6,10 @@ fac·to·tum
     noun
     an employee who does all kinds of work.
     "he was employed as the general factotum"
-    synonyms:	handyman, jack of all trades; assistant, man Friday, gal/girl Friday; gofer; informal Mr./Ms. Fix-It
+    synonyms:	handyman, jack of all trades; assistant, man Friday, gal/girl
+                Friday; gofer; informal Mr./Ms. Fix-It
 
-factotum is concieved as a simple service that can run on any python
+factotum is conceived as a simple service that can run on any python
 platform.  It will provide a HTTP interface to run commands on the
 machine it is running on, as the user it is running as.  The commands
 have to be configured into the service itself, to simplify security.
@@ -18,8 +19,8 @@ hand off a task to a service account on a different machine.
 
 Originally we targeted this as a mechanism where a git trigger that can
 cause a remote server to perform a git pull as a completely different
-user.  This is to avoid the classic solution using a passwordless SSH
-with a passwordless SUDO command.
+user.  This is to avoid the classic solution using a password-less SSH
+with a password-less SUDO command.
 
 It has expanded to allow Jira, Jenkins, and other services run across
 privilege and platform boundaries.
@@ -51,6 +52,7 @@ factotum is a program that when launched will:
     0.6 since we haven't loaded our config file yet, scream on stderr if we fail
         any part of this
 
+
 1 read a config file
     1.1 passed by command line argument
     1.2 yaml formatted
@@ -61,6 +63,7 @@ factotum is a program that when launched will:
               where we were started (requires that we remember that directory
               before changing it in 0.1)
     1.6 validate the config file
+
 
 2 based on that config file do several things
     2.1 listen on a port given in the config file
@@ -74,6 +77,7 @@ factotum is a program that when launched will:
         2.3.4 look for keywords (action tags)
         2.3.5 provide status on a pre-configured status keyword
 
+
 3 on receiving a validated action tag
     3.1 change to a directory specified in the action configuration section
     3.2 run a command specified in the action configuration section
@@ -85,7 +89,8 @@ factotum is a program that when launched will:
     3.4 If environment variables are to be passed, they should be called out
         in the config, otherwise they should not be passed
 
-4 additional features for a version 2
+
+4 additional features for a proposed version 2
     4.1 accept additional arguments or data structures on the port
     4.2 validate that additional information 
         4.2.1 have to determine how to validate, where the validator comes from
@@ -103,6 +108,7 @@ factotum is a program that when launched will:
     4.6 track performance indicators and runtime metrics in a database, provide "built in"
         keyword to fetch metrics.
 
+
 5 Sample configuration file
 
 This config file is in yaml format with a leading comment block (# delimited).
@@ -117,14 +123,7 @@ rtyaml will not preserve any other comments.
     # if you run this command as a privileged user.
     #
     # Configuration Elements:
-    #   actions: a list of URI parts and the expected actions to take
-    #     TAG:  each tag under actions is the URL part to match
-    #       chdir: directory to chdir to before running the command in 'exec'
-    #       description: a string to print to describe this service URL
-    #       environment: a list of environment variables to pass or set
-    #       exec: a command to run
-    #       return: one or more of 'stdout','stderr','code'
-    #       type: one of 'raw' or 'dict'
+    #   commandfile: a file to load commands from (also yaml)
     #   banner: a string to print when anything connects
     #   interface: list of IP addresses that this service listens on.  (0.0.0.0 - means all interfaces)
     #   logging: is a list of configuration elements to control logging
@@ -138,30 +137,10 @@ rtyaml will not preserve any other comments.
     #       version: client version string regular expression (match == pass) (null == auto-pass)
     #       verify: turn on/off client verification
     #       ip: client ip address regular expression (match == pass) (null == auto-pass)
+    #   debug: turns on various messages and Flask debug if True
     #
     # Python YAML via rtyaml only preserves comments at the beginning of the file.
-    actions:
-      LSSYSLOG:
-        chdir: /var/log
-        description: ls -l /var/run/syslog, check stats of syslog
-        environment:
-        - HOME
-        - LANG
-        - PYTHON=/usr/bin/python
-        exec: ls -al syslog
-        return: stdout
-        type: raw
-        limit: 1/m
-        timeout: 5s
-      MOTD:
-        chdir: /
-        description: cat motd
-        environment: ~
-        exec: cat /etc/motd
-        return: stdout
-        type: raw
-        limit: 1/s
-        timeout: 5s
+    commandfile: commands.conf
     banner: Factotum test
     interface: 0.0.0.0
     logging:
@@ -175,10 +154,41 @@ rtyaml will not preserve any other comments.
       version: /[10].[0-9]/
       verify: false
       ip: ~
+    debug: True
+
+
+6 Sample commands.conf file
+
+    # This file contains some trivial examples, the keyword is the
+    # part expected in the URL like
+    #  http://localhost:9000/LSSYSLOG
+    #                        ^^^^^^^^
+    #
+    # then the program changes directory to the 'chdir' value and
+    # executes the 'exec' value.  These are trivial examples,
+    # with some validation additional parameters can be accepted and
+    # passed to the exec line.
+    #
+    # The following keywords are reserved:
+    #  /commands
+    #  /config
+    #  /env
+    #  /id
+    #  /status
+
+    LSSYSLOG:
+        chdir: /var/log
+        exec: /bin/ls -al system.log
+    MOTD:
+        chdir: /
+        exec: /bin/cat /etc/motd
+    SIGH:
+        chdir: /
+        exec: /bin/echo Sighed, Yes!
 
 
 
-6 Sample commandline specification
+7 Sample commandline specification
 
     factotum [-d] [-v...] [-c file|url]
 
