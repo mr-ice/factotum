@@ -16,69 +16,107 @@
 # 
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
+
+from __future__ import print_function
 import sys
+import os
 import argparse
 import rtyaml
-from flask import Flast, render_template
+import subprocess
+import time
+from flask import Flask, render_template
 
-app = Flask(__name__)
+workdir = os.path.dirname(os.path.realpath(__file__))
+
+factotum = Flask(__name__)
 
 parser = argparse.ArgumentParser('factotum - your handy jack of all web services')
 parser.add_argument('--config','-c', 
                     help='load application configuration from file',
-                    default='config.yaml')
+                    default='factotum.conf')
 
 args = parser.parse_args()
 
 config = rtyaml.load(file(args.config))
 
-factotum = Flask(__name__)
+if config['debug']:
+    print("got interface as {}".format(config['interface']))
 
-if args.config:
-    config = rtyaml.load(args.config)
-else:
-    config = rtyaml.load('factotum.conf') # default configuration
-
-
-@app.route('/<command>', methods = ['POST'])
+@factotum.route('/<command>', methods = ['POST', 'GET'])
 def handler(command):
-    
-    
-    # handle json passed in
-    # load commands
-    with open(config.commandfile) as file:
-        commands = json.load(file)
-        
-    if commands[command]:
-        run = commands[command]["command"]
-        for arg in commands[command]["args"]:
-            if arg == "time":
-                run += "%s" % (time.ctime(),)
-        failed = False
+
+    configfile = workdir + "/" + config['commandfile']
+    if config['debug']:
+        print(configfile)
+        print(command)
+    # load commands data inside the loop -- this ensures changes are picked up immediately
+    try:
+        with open(configfile) as file:
+            commands = rtyaml.load(file)
+    except Exception as e:
+        raise e # do something smart here later (open config)
+
+    print(commands[command].__str__())
+
+    if command not in commands:
+        print("Command not found: {}".format(command))
+        return "Command not found: {}".format(command)
+
+    try:
+        run = commands[command]['exec']
+    except Exception as e:
+        raise e # do something smart here later (set run string)
+
+    try:
+        chdir = commands[command]['chdir']
+    except Exception as e:
+        raise e # do something smart here later (set chdir string)
+
+    try:
         t = time.strftime("%Y%m%d-%H%M%S") # timestamp
-        out = check_output(run, stderr=subprocess.STDOUT)
-        try: 
-            logdir = config.logdir
-            if not os.path.exists(logdir):
-                os.makedirs(logdir)
-            try:
-                f = open(logdir + "/" + command + "-" + t + ".log", 'wb+)
-                f.write(out)
-                f.close()
-            except Exception as e:
-                raise e # placeholder for error handling in the future
-                
-        except Exception as e:
-            raise e # placeholder for error handling in the future
-    else:
-        print "Command not found: " + command
-        return "Command not found: " + command
-        
-@app.route('/status')
+    except Exception as e:
+        raise e # do something smart here later (set timestamp string)
+
+    try:
+        if config['debug']:
+            print("About to run {} after chdir({})".format(run,chdir))
+    except Exception as e:
+        raise e # do something smart here later (print debugging info)
+
+    try:
+        os.chdir(chdir)
+    except Exception as e:
+        raise e # do something smart here later (chdir)
+
+    try:
+        out = subprocess.check_output(run, stderr=subprocess.STDOUT, shell=True)
+        return out
+    except Exception as e:
+        raise e # do something smart here later (subprocess.check_output)
+
+        # try:
+        #     logdir = config.logdir
+        #     if not os.path.exists(logdir):
+        #         os.makedirs(logdir)
+        #     try:
+        #         f = open(config.logdir + "/" + command + "-" + t + ".log", 'wb+)
+        #         f.write(out)
+        #         f.close()
+        #     except Exception as e:
+        #         raise e # placeholder for error handling in the future
+        #
+        # except Exception as e:
+        #     raise e # do something smart here later
+    except Exception as e:
+        raise e # do something smart here later (try run)
+
+    return "Error: fell through"
+
+@factotum.route('/status')
 def Status():
     return "factotum running"
     
     
 if __name__ == '__main__':
-    app.run(host = config.host, port = config.port, debug=config.debug)
+    factotum.run(host = config['interface'], port = config['port'], debug=config['debug'])
